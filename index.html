@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LABS Showcase - 캐릭터 프로토타입</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f6f6;--card:#fff;--ink:#222;--sub:#8a8a8a;--line:#ececec;--g:#5fd01f;--gl:#eefbe3;--top:#444;--dark:#46464b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#17181a;--card:#222326;--ink:#f1f1f1;--sub:#9a9a9a;--line:#333;--gl:#243319}}
+:root[data-theme=dark]{--bg:#17181a;--card:#222326;--ink:#f1f1f1;--sub:#9a9a9a;--line:#333;--gl:#243319}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Pretendard,"Noto Sans KR","Apple SD Gothic Neo",sans-serif}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+.top{background:var(--top);color:#fff;text-align:center;font-size:12px;padding:8px}
+.shell{display:flex;min-height:calc(100vh - 34px)}
+nav{width:72px;background:var(--card);border-right:1px solid var(--line);padding:14px 0;display:flex;flex-direction:column;gap:6px;align-items:center;flex-shrink:0}
+nav button{width:56px;padding:8px 0;border-radius:12px;font-size:11px;color:var(--sub);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button i{font-style:normal;font-size:18px}nav button.on{background:var(--bg);color:var(--ink);font-weight:700}
+.sub{position:absolute;left:72px;top:34px;width:150px;background:var(--card);border:1px solid var(--line);border-radius:0 12px 12px 0;padding:10px;display:none;z-index:20;box-shadow:0 8px 20px #0001}
+.sub.show{display:block}.sub button{display:block;width:100%;text-align:left;padding:7px 8px;border-radius:8px;font-size:13px}.sub button:hover{background:var(--bg)}
+main{flex:1;min-width:0;padding:16px 24px 120px}
+.search{max-width:520px;margin:0 auto 18px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 16px;color:var(--sub);font-size:13px}
+.card{background:var(--card);border-radius:16px;padding:20px;border:1px solid var(--line)}
+h2{font-size:16px;margin:0 0 12px}h1{font-size:22px;margin:0 0 14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+.empty{text-align:center;color:var(--sub);padding:26px 0;font-size:12px}
+.btn{border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12px}.btn.p{background:var(--g);color:#fff;border-color:var(--g);font-weight:700}
+.hero{height:220px;border-radius:16px;background:linear-gradient(120deg,#200,#a10 60%,#400);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}.tile{border-radius:12px;color:#fff;padding:14px;height:110px;font-weight:700;font-size:13px;display:flex;align-items:flex-end}
+.wrap2{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+.me{text-align:center}.chip{background:var(--gl);color:#3a9a0a;border-radius:999px;padding:2px 10px;font-weight:700;font-size:12px}.chip b{background:var(--g);color:#fff;border-radius:6px;padding:0 5px;margin-left:4px;font-size:11px}
+.bar{height:10px;background:var(--line);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--g);transition:width .6s}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);margin-top:16px;padding-top:14px;font-size:12px;color:var(--sub)}.stats b{display:block;font-size:22px;color:var(--ink)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:16px}.tabs button{padding:12px;font-size:13px;color:var(--sub)}.tabs button.on{background:var(--dark);color:#fff;font-weight:700}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;margin-bottom:6px}.row.mine{background:var(--gl);outline:2px solid var(--g)}
+.rk{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;border:2px solid var(--line)}.rk.r1{border-color:#f6c945;color:#c99a00}.rk.r2{border-color:#bbb}.rk.r3{border-color:#f0a050}
+.av{width:36px;height:36px;border-radius:50%;flex-shrink:0}.xp{margin-left:auto;background:var(--gl);color:#3a9a0a;font-weight:800;font-size:12px;border-radius:999px;padding:2px 10px}
+.rise{animation:rise 1.2s ease}@keyframes rise{0%{transform:translateY(60px);opacity:.3}60%{transform:translateY(-12px);box-shadow:0 0 0 8px #5fd01f55}100%{transform:none}}
+.mis{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px}.mis.done{background:var(--gl)}
+.badges{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.bd{text-align:center;padding:16px 8px;border:1px solid var(--line);border-radius:12px;font-size:12px}.bd .ic{font-size:30px}.bd.off{opacity:.35;filter:grayscale(1)}
+table{width:100%;border-collapse:collapse}td,th{padding:12px;border-bottom:1px solid var(--line);text-align:left;font-size:13px;vertical-align:top}th{background:var(--bg)}
+.modal{position:fixed;inset:0;background:#0007;display:none;place-items:center;z-index:50}.modal.show{display:grid}.mbox{background:var(--card);border-radius:20px;padding:22px;width:min(680px,94vw);max-height:90vh;overflow:auto;display:grid;grid-template-columns:200px 1fr;gap:20px}
+.opt{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}.opt h3{width:100%;margin:0;font-size:12px;color:var(--sub)}
+.sw{width:30px;height:30px;border-radius:50%;border:3px solid transparent;outline:1px solid var(--line)}.sw.on{border-color:var(--ink)}.pill{padding:5px 12px;border:1px solid var(--line);border-radius:999px;font-size:12px}.pill.on{background:var(--ink);color:var(--card)}.pill.lock{opacity:.4}
+#walker{position:fixed;bottom:12px;left:100px;width:104px;z-index:30;transition:left 4.5s linear;cursor:pointer}
+#walker svg{width:104px;height:auto;overflow:visible}
+#bub{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-30%);width:230px;background:var(--card);border:2px solid var(--g);border-radius:16px;padding:10px 12px;font-size:12.5px;box-shadow:0 8px 24px #0002;cursor:default}
+#bub:after{content:"";position:absolute;bottom:-9px;left:34%;width:14px;height:14px;background:var(--card);border-right:2px solid var(--g);border-bottom:2px solid var(--g);transform:rotate(45deg)}
+#bub small{display:block;color:#3a9a0a;font-weight:700;margin-bottom:2px}#bub .go{margin-top:6px;color:#fff;background:var(--g);border-radius:8px;padding:3px 10px;font-size:12px;font-weight:700}
+.flip #wc{transform:scaleX(-1)}.walk .leg1{animation:l1 .45s infinite alternate}.walk .leg2{animation:l1 .45s infinite alternate-reverse}.walk svg{animation:bob .45s infinite}
+.leg1,.leg2{transform-box:fill-box;transform-origin:50% 0}svg.s0{animation:rock 2.4s ease-in-out infinite;transform-origin:50% 100%}.zz{animation:zz 2s infinite}@keyframes zz{50%{transform:translateY(-4px);opacity:.4}}@keyframes rock{50%{transform:rotate(2.5deg)}}.kick{transform-box:fill-box;transform-origin:100% 50%;animation:kk .9s infinite alternate}.kick2{transform-box:fill-box;transform-origin:0 50%;animation:kk .9s infinite alternate-reverse}@keyframes kk{to{transform:rotate(-10deg)}}.eye{transform-box:fill-box;transform-origin:center;animation:blink 4s infinite}@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}.wave{transform-box:fill-box;transform-origin:0 100%;animation:wv .6s infinite alternate}@keyframes wv{to{transform:rotate(-22deg)}}@keyframes l1{from{transform:rotate(-18deg)}to{transform:rotate(18deg)}}@keyframes bob{50%{transform:translateY(-3px)}}
+.cheer svg,.cheer svg.s0{animation:jump .5s 4}@keyframes jump{50%{transform:translateY(-18px)}}
+.toast{position:fixed;top:50px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:10px 18px;border-radius:999px;z-index:60;display:none;font-weight:700}
+.note{background:var(--gl);border-radius:10px;padding:10px 14px;font-size:12px;margin-bottom:14px}
+@media(max-width:820px){.wrap2,.grid3,.tiles,.mbox{grid-template-columns:1fr}nav{width:56px}main{padding:12px}.badges{grid-template-columns:repeat(2,1fr)}}
+.walk svg.s0{animation:scoot .5s infinite}@keyframes scoot{50%{transform:translateY(-4px) rotate(3deg)}}.cheer.walk svg,.cheer.walk svg.s0{animation:jump .5s 4}.av svg{width:100%;height:100%;display:block}
+.gbox{background:var(--card);border-radius:20px;padding:22px;width:min(460px,94vw);max-height:90vh;overflow:auto;display:flex;flex-direction:column;gap:14px}
+.gsec h3{margin:0 0 8px;font-size:13px}.gsec h3 small{font-weight:400;color:var(--sub);margin-left:6px;font-size:11px}
+.gl{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.gchip{display:inline-flex;align-items:center;gap:4px;background:var(--gl);color:var(--ink);border:1px solid var(--g);border-radius:999px;padding:4px 6px 4px 12px;font-size:12px;font-weight:600}
+.gchip button{width:18px;height:18px;border-radius:50%;line-height:16px;font-size:13px;color:var(--sub)}.gchip button:hover{background:var(--g);color:#fff}
+.gsug{border:1px dashed var(--sub);border-radius:999px;padding:4px 11px;font-size:12px;color:var(--sub)}.gsug:hover{border-color:var(--g);color:var(--ink)}
+.gin{display:flex;gap:6px}.gin input{flex:1;min-width:0;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px}.gin input:focus{outline:2px solid var(--g);border-color:transparent}
+.gsum{background:var(--gl);border-radius:10px;padding:10px 12px;font-size:12px}
+.gfoot{display:flex;gap:8px;justify-content:flex-end}.gfoot .btn{padding:9px 16px;font-size:13px}
+.mis input[type=checkbox]{width:18px;height:18px;accent-color:var(--g);flex-shrink:0}
+button:focus-visible,input:focus-visible{outline:2px solid var(--g);outline-offset:2px}
+</style></head><body>
+<div class="top">🎉 임팩티브AI 및 휴넷FLEX 가입(체험)을 축하합니다!</div>
+<div class="shell">
+<nav id="nav"></nav>
+<div class="sub" id="sub"><button data-p="learn">학습현황</button><button data-p="mission">활동/미션</button><button data-p="coach">개인 코칭</button></div>
+<main id="main"></main></div>
+<div id="walker"><div id="bub"></div><div id="wc"></div></div>
+<div class="modal" id="modal"><div class="mbox"><div id="mprev" style="text-align:center"></div><div id="mopt"></div></div></div>
+<div class="modal" id="gmodal"><div class="gbox" id="gbox" role="dialog" aria-label="6개월 학습 목표 설정"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+// ===== 설정(운영 설정 기준과 연결되는 값) =====
+const CFG={levels:[0,100,300,500,800,1200,1800],stage:["응애 갓난아기","아기","어린이","청소년","청년","성인","할아버지"],
+ missions:[{t:"Connect 메뉴 접속",xp:10,d:1},{t:"Contents 메뉴 접속",xp:10,d:1},{t:"출석",xp:10,d:1,done:1},{t:"콘텐츠 1차시 학습",xp:30,d:0},{t:"주간 목표 달성",xp:50,d:0}],
+ badges:[["🌱","첫 방문"],["🔥","3일 연속 출석"],["📚","필수교육 완료"],["🎯","주간 목표"],["🏆","랭킹 1위"],["💎","학습 마스터"],["🤝","Connect 참여"],["⭐","30일 출석"]]};
+const S={xp:0,pt:0,own:{},mb:530,rank:2,page:"home",tab:"mission",rank1:false,
+ c:{skin:"#ffd9bd",hair:"#4a3020",style:"short",top:"#7ed957",acc:"none"},
+ users:[["유*석",560],["이*지",530],["김*혁",390],["김*희",380],["이*원",370],["김*름",170],["김*",140],["최*규",130]],
+ colors:["#ff8fa3","#5aa0ff","#7ed957","#ffc94d","#b07cff","#444"],hairs:["#4a3020","#1f1f1f","#c98b3c","#d9534f","#8a63d2","#f4d27a"],skins:["#ffe3cf","#ffd9bd","#e8b68f","#b9805a","#8a5a3c"]};
+S.goal=null;S.gm=0;
+const lvl=()=>{let l=0;CFG.levels.forEach((v,i)=>{if(S.xp>=v)l=i});return l};
+// ===== 캐릭터 SVG (7단계: 새싹아기→아기→어린이→청소년→청년→성인, 기존 캐릭터의 눈코입 스타일) =====
+const st=()=>{const x=S.xp;return x<20?0:x<100?1:x<300?2:x<500?3:x<800?4:x<1200?5:6};
+function baby(mood,c,jewel,face){
+ const sk=c.skin,hk=c.hair,R=32;
+ const eyes=mood=="alert"?`<path d="M30 67 l9 4 l-9 4 M70 67 l-9 4 l9 4" stroke="#3a1f15" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+ :mood=="happy"?[38,62].map(x=>`<g class="eye"><circle cx="${x}" cy="70" r="8.6" fill="#6b3b28"/><circle cx="${x}" cy="70.5" r="5.4" fill="#2a140d"/><circle cx="${x+2.8}" cy="66.5" r="2.7" fill="#fff"/><circle cx="${x-2.6}" cy="73.4" r="1.3" fill="#fff"/></g>`).join("")
+ :`<path d="M31 70 q7 6 14 0 M55 70 q7 6 14 0" stroke="#3a1f15" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
+ const brow=mood=="alert"?"":`<path d="M31 59 q5-3 10 0 M59 59 q5-3 10 0" stroke="#b08070" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+ const mouth=mood=="alert"?`<ellipse cx="50" cy="85" rx="6.5" ry="5.5" fill="#b53e4a"/><ellipse cx="50" cy="88" rx="3.6" ry="2.2" fill="#ef7f86"/><path d="M29 77 q-3 5 0 8 q3-3 0-8z M71 77 q-3 5 0 8 q3-3 0-8z" fill="#8fd3ff"/>`
+ :mood=="happy"?`<path d="M43 82 q7 9 14 0z" fill="#d65f5f" stroke="#a8403f" stroke-width="1.2" stroke-linejoin="round"/>`
+ :`<ellipse cx="50" cy="84" rx="8" ry="5.4" fill="#8fd3ff" stroke="#5fb4ea"/><circle cx="50" cy="84" r="2.3" fill="#fff"/><circle cx="50" cy="91" r="3.2" fill="none" stroke="#5fb4ea" stroke-width="1.6"/>`;
+ const hand=mood=="happy"?`<path class="wave" d="M70 102 Q79 96 79 84" stroke="${sk}" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="79" cy="82.5" r="4.6" fill="${sk}"/>`:mood=="alert"?"":`<circle cx="60" cy="99" r="4.6" fill="${sk}"/>`;
+ const fists=mood=="alert"?`<circle cx="27" cy="90" r="4.8" fill="${sk}"/><circle cx="73" cy="90" r="4.8" fill="${sk}"/>`:"";
+ const zz=mood=="happy"||mood=="alert"?"":`<text class="zz" x="76" y="38" font-size="11" fill="#7a9ad9" font-weight="700">z</text><text class="zz" x="83" y="28" font-size="8" fill="#7a9ad9" font-weight="700">z</text>`;
+ let ac="",cape="";
+ if(jewel){
+  if(c.acc=="crown")ac=`<path d="M40 33 l-2-12 l7 5 l5-10 l5 10 l7-5 l-2 12z" fill="#ffd34d" stroke="#e0a800" stroke-width="1.2" stroke-linejoin="round"/><circle cx="50" cy="19" r="1.8" fill="#ff6b81"/>`;
+  if(c.acc=="necklace")ac=`<path d="M40 97 q10 9 20 0" stroke="#ffd34d" stroke-width="2.2" fill="none"/><circle cx="50" cy="103" r="2.8" fill="#6fe0ff"/>`;
+  if(c.acc=="earring")ac=`<circle cx="18" cy="75" r="2.8" fill="#ffd34d"/><circle cx="82" cy="75" r="2.8" fill="#ffd34d"/>`;
+  if(c.acc=="cape")cape=`<path d="M28 94 l-8 26 h60 l-8-26z" fill="#e8484f"/>`}
+ const vb=face?`${50-R*1.15} ${64-R*1.25} ${R*2.3} ${R*2.3}`:"8 16 84 106";
+ return `<svg class="s0" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">${cape}
+ <ellipse cx="50" cy="106" rx="26" ry="15" fill="${c.top}"/><path d="M26 104 Q50 118 76 102" stroke="#fff" stroke-opacity=".55" stroke-width="2" fill="none"/><path d="M30 111 Q52 122 72 110" stroke="#fff" stroke-opacity=".35" stroke-width="2" fill="none"/>${hand}
+ <circle cx="18" cy="68" r="6.5" fill="${sk}" stroke="#0002"/><circle cx="18" cy="68" r="3" fill="#f6a89a" opacity=".7"/><circle cx="82" cy="68" r="6.5" fill="${sk}" stroke="#0002"/><circle cx="82" cy="68" r="3" fill="#f6a89a" opacity=".7"/>
+ <circle cx="50" cy="64" r="32" fill="${sk}" stroke="#0002"/>
+ <ellipse cx="27" cy="79" rx="7.5" ry="5" fill="#ff8a8a" opacity=".42"/><ellipse cx="73" cy="79" rx="7.5" ry="5" fill="#ff8a8a" opacity=".42"/>
+ <path d="M21 56 C21 42 33 33.5 50 33.5 C67 33.5 79 42 79 56 Q64 47 50 49 Q36 47 21 56z" fill="${hk}" opacity=".4"/><path d="M50 33.5 q-4-8 4-9.5 q4 0 2.5 4" stroke="${hk}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+ ${brow}${eyes}<ellipse cx="50" cy="77" rx="2.2" ry="1.7" fill="#f09a8a"/>${mouth}${fists}${zz}${ac}</svg>`}
+const PAR=[0,[30,16,8,24],[26,24,14,26],[23,30,20,28],[21,36,26,30],[20,40,28,32],[20,38,26,32]];
+function ch(mood,L=st(),c=S.c,jewel=(S.rank1||!!S.own[S.c.acc]),face=false){
+ if(L==0)return baby(mood,c,jewel,face);
+ const [R,bh,lh,bw]=PAR[L],fy=116,lt=fy-lh,bt=lt-bh+4,hy=bt-R*.78,old=L==6,hk=old?"#eef1f4":c.hair,sk=c.skin,k=R*.375,ey=hy+R*.15,ir=R*(L<3?.27:.24),ink="#3a1f15";
+ const eye=(x,m)=>`<g class="eye"><circle cx="${x}" cy="${ey}" r="${ir*m}" fill="#6b3b28"/><circle cx="${x}" cy="${ey+.5}" r="${ir*m*.63}" fill="#2a140d"/><circle cx="${x+ir*.33*m}" cy="${ey-ir*.4*m}" r="${ir*.31*m}" fill="#fff"/><circle cx="${x-ir*.3*m}" cy="${ey+ir*.4*m}" r="${ir*.15*m}" fill="#fff"/><path d="M${x-ir*m} ${ey-ir*.4*m} q${ir*m} -${ir*1.05*m} ${ir*2*m} 0" stroke="${ink}" stroke-width="1.3" fill="none"/></g>`;
+ const m=mood=="alert"?1.15:1,eyes=eye(50-k,m)+eye(50+k,m);
+ const bc=old?"#cfd4d9":"#8a5a45",bwid=old?3:1.6,by=hy-R*(mood=="alert"?.38:.3);
+ const brow=`<path d="M${50-k-R*.16} ${by} q${R*.16} -${R*.11} ${R*.32} 0 M${50+k-R*.16} ${by} q${R*.16} -${R*.11} ${R*.32} 0" stroke="${bc}" stroke-width="${bwid}" fill="none" stroke-linecap="round"/>`;
+ const my=hy+R*(old?.66:.57),mouth=mood=="alert"?`<ellipse cx="50" cy="${my+R*.04}" rx="${R*.08}" ry="${R*.1}" fill="#b53e4a"/><path d="M${50+R*.7} ${hy-R*.1} q-${R*.1} ${R*.2} 0 ${R*.24} q${R*.1}-${R*.05} 0-${R*.24}z" fill="#8fd3ff"/>`
+ :mood=="happy"?`<path d="M${50-R*.22} ${my-R*.04} q${R*.22} ${R*.3} ${R*.44} 0z" fill="#d65f5f" stroke="#a8403f" stroke-width="1.2" stroke-linejoin="round"/>`
+ :`<path d="M${50-R*.14} ${my} q${R*.14} ${R*.17} ${R*.28} 0" stroke="#b5504a" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+ const nose=`<ellipse cx="50" cy="${hy+R*.4}" rx="${R*.07}" ry="${R*.055}" fill="#f09a8a"/>`;
+ const blush=[-1,1].map(d=>`<ellipse cx="${50+d*R*.84}" cy="${hy+R*.47}" rx="${R*.23}" ry="${R*.16}" fill="#ff8a8a" opacity=".42"/>`).join("");
+ const ears=[-1,1].map(d=>`<circle cx="${50+d*R*.97}" cy="${hy+R*.12}" r="${R*.2}" fill="${sk}" stroke="#0002"/><circle cx="${50+d*R*.97}" cy="${hy+R*.12}" r="${R*.09}" fill="#f6a89a" opacity=".7"/>`).join("");
+ const sw=`M${50-R*1.03} ${hy-R*.06} C${50-R*1.1} ${hy-R*.75} ${50-R*.5} ${hy-R*1.12} 50 ${hy-R*1.12} C${50+R*.5} ${hy-R*1.12} ${50+R*1.1} ${hy-R*.75} ${50+R*1.03} ${hy-R*.06} Q${50+R*.5} ${hy-R*.56} ${50-R*.06} ${hy-R*.375} Q${50-R*.56} ${hy-R*.31} ${50-R*1.03} ${hy-R*.06}z`;
+ let hb="",hf="",ex="";
+ if(old){const t=d=>`<ellipse cx="${50+d*R*1.0}" cy="${hy-R*.02}" rx="${R*.22}" ry="${R*.42}" fill="${hk}" stroke="#0003"/>`;hb=t(-1)+t(1);
+  hf=`<path d="M${50-R*.2} ${hy-R*.98} q${R*.2}-${R*.2} ${R*.4} 0" stroke="${hk}" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M${50-R*.4} ${hy-R*.55} q${R*.4}-${R*.14} ${R*.8} 0" stroke="#0002" fill="none"/>`;
+  ex=`<ellipse cx="${50-R*.17}" cy="${hy+R*.52}" rx="${R*.2}" ry="${R*.1}" fill="#f4f6f8" stroke="#0003" transform="rotate(14 ${50-R*.17} ${hy+R*.52})"/><ellipse cx="${50+R*.17}" cy="${hy+R*.52}" rx="${R*.2}" ry="${R*.1}" fill="#f4f6f8" stroke="#0003" transform="rotate(-14 ${50+R*.17} ${hy+R*.52})"/><circle cx="${50-k}" cy="${ey}" r="${R*.3}" fill="none" stroke="#6b5b4b" stroke-width="1.6"/><circle cx="${50+k}" cy="${ey}" r="${R*.3}" fill="none" stroke="#6b5b4b" stroke-width="1.6"/><path d="M${50-k+R*.3} ${ey} h${2*k-R*.6}" stroke="#6b5b4b" stroke-width="1.6"/>`}
+ else{hf=`<path d="${sw}" fill="${hk}" stroke="#0003" stroke-linejoin="round"/><path d="M${50-R*.8} ${hy-R*.7} q${R*.45}-${R*.3} ${R*.95}-${R*.18}" stroke="#fff" stroke-opacity=".3" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  if(L>=2&&c.style=="bob")hb=`<ellipse cx="50" cy="${hy+R*.25}" rx="${R*1.12}" ry="${R*1.05}" fill="${hk}" stroke="#0003"/>`;
+  if(L>=2&&c.style=="bun")hf+=`<circle cx="50" cy="${hy-R*1.12}" r="${R*.3}" fill="${hk}" stroke="#0003"/>`}
+ const A=(sx,sy,ex2,ey2,cls)=>{const mx=sx+(ex2-sx)*.45,my2=sy+(ey2-sy)*.45;return `<g class="${cls||""}"><path d="M${sx} ${sy} L${mx} ${my2}" stroke="${c.top}" stroke-width="6.5" stroke-linecap="round"/><path d="M${mx} ${my2} L${ex2} ${ey2}" stroke="${sk}" stroke-width="5" stroke-linecap="round"/><circle cx="${ex2}" cy="${ey2}" r="3.7" fill="${sk}"/></g>`};
+ const lx=50-bw/2-3,rx=50+bw/2+3,hand1=[lx-1,bt+bh*.6];
+ const arms=A(50-bw/2,bt+7,hand1[0],hand1[1])+(mood=="happy"?A(50+bw/2,bt+7,rx+7,bt-bh*.15,"wave"):A(50+bw/2,bt+7,rx,bt+bh*.6));
+ const cane=old?`<path d="M${hand1[0]} ${hand1[1]+2} V${fy-1}" stroke="#8b5e3c" stroke-width="3" stroke-linecap="round"/><path d="M${hand1[0]-4} ${hand1[1]-3} q4-5 8 0" stroke="#8b5e3c" stroke-width="3" fill="none" stroke-linecap="round"/>`:"";
+ const pc=L==1?"#fff":old?"#7c8794":"#5b6bb5",sc=old?"#6b4a36":"#fff";
+ const legs=[-1,1].map((d,i)=>`<g class="leg${i+1}"><rect x="${50+d*bw/4-4.3}" y="${lt}" width="8.6" height="${lh}" rx="4" fill="${pc}" stroke="#0002"/><ellipse cx="${50+d*bw/4+d*.8}" cy="${fy-1.5}" rx="6.2" ry="3.4" fill="${sc}" stroke="#d0d0d8"/></g>`).join("");
+ const torso=`<rect x="${50-bw/2}" y="${bt}" width="${bw}" height="${bh}" rx="${Math.min(bw/2.3,bh/2)}" fill="${c.top}" stroke="#0002"/>`+(L>=4?`<path d="M46 ${bt} l4 6 l4-6z" fill="#fff"/>`:"")+(L==1?`<path d="M${50-bw/2+2} ${bt+bh-5} h${bw-4}" stroke="#fff" stroke-opacity=".5" stroke-width="2"/>`:"");
+ let ac="",cape="";
+ if(jewel){
+  if(c.acc=="crown")ac=`<path d="M${50-9} ${hy-R*1.0} l-2-12 l7 5 l4-10 l4 10 l7-5 l-2 12z" fill="#ffd34d" stroke="#e0a800" stroke-width="1.2" stroke-linejoin="round" transform="translate(4 -2)"/>`;
+  if(c.acc=="necklace")ac=`<path d="M${50-bw*.3} ${bt+1} q${bw*.3} ${bw*.45} ${bw*.6} 0" stroke="#ffd34d" stroke-width="2.2" fill="none"/><circle cx="50" cy="${bt+bw*.32}" r="2.8" fill="#6fe0ff"/>`;
+  if(c.acc=="earring")ac=`<circle cx="${50-R*.97}" cy="${hy+R*.38}" r="2.8" fill="#ffd34d"/><circle cx="${50+R*.97}" cy="${hy+R*.38}" r="2.8" fill="#ffd34d"/>`;
+  if(c.acc=="cape")cape=`<path d="M${50-bw/2-2} ${bt+3} l-7 ${bh+lh} h${bw+18} l-7-${bh+lh}z" fill="#e8484f"/>`}
+ const top=Math.floor(hy-R*1.4-8),vb=face?`${50-R*1.2} ${hy-R*1.3} ${R*2.4} ${R*2.4}`:`0 ${top} 100 ${122-top}`;
+ return `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">${cape}${legs}${torso}${arms}${cane}${hb}${ears}<circle cx="50" cy="${hy}" r="${R}" fill="${sk}" stroke="#0002"/>${blush}${hf}${brow}${eyes}${nose}${ex}${mouth}${ac}</svg>`}
+// ===== 리마인드 메시지(행동 분석 기반) =====
+const MSG=[
+ {k:"콘텐츠 안내",m:"응애~ 처음 만났네요! 오늘은 어떤 주제가 궁금하세요? 관심 분야부터 골라볼까요?",go:"home",mood:"happy"},
+ {k:"기한",m:"필수교육 마감까지 7일 남았어요. 남은 차시를 확인해보세요.",go:"learn",mood:"alert"},
+ {k:"팀 랭킹",m:"우리 팀이 3위예요. 1위와 40XP 차이예요. 조금만 더 힘내요!",go:"mission",mood:"idle"},
+ {k:"순위변동",m:"2위에서 1위로 올랐어요! 쥬얼리를 골라볼까요?",go:"decorate",mood:"happy"},
+ {k:"맞춤 큐레이션",m:"요즘 '세일즈' 과정을 많이 보고 계세요. 관심 주제가 맞나요? 이 과정을 추천해요.",go:"coach",mood:"idle"},
+ {k:"이탈방지",m:"듣다 만 과정이 있어요. 오늘은 안 들어오실 건가요? 5분만 이어서 학습해볼까요?",go:"learn",mood:"alert"},
+ {k:"보상안내",m:"미션 달성! 50XP와 50P를 받았어요. 포인트로 캐릭터를 꾸밀 수 있어요.",go:"decorate",mood:"happy"},
+ {k:"맞춤수업",m:"내일 오후 2시 개인 코칭 맞춤수업이 있어요. 미리 질문을 적어둘까요?",go:"coach",mood:"alert"},
+ {k:"목표 리마인드",get m(){return goalMsg().m},get go(){return goalMsg().go},get mood(){return goalMsg().mood}},
+ {k:"담아둔 과목",get m(){return wishMsg().m},get go(){return wishMsg().go},get mood(){return wishMsg().mood}}];
+const mx=k=>MSG.findIndex(m=>m.k==k);
+let mi=0,cur=MSG[0];
+function say(i){mi=i;cur=MSG[i];$("bub").innerHTML=`<small>${cur.k}</small>${cur.m}<br><button class="go" onclick="go('${cur.go}')">바로가기</button>`;
+ $("wc").innerHTML=ch(cur.mood);const w=$("walker");w.classList.toggle("cheer",cur.mood=="happy")}
+const $=id=>document.getElementById(id);
+// ===== 걸어다니기 =====
+let wx=100,wt;function stroll(){const w=$("walker");let t,n=0;do{t=80+Math.random()*Math.max(60,innerWidth-330);n++}while(Math.abs(t-wx)<150&&n<20);
+ const d=Math.max(2.5,Math.abs(t-wx)/55);w.style.transitionDuration=d+"s";w.classList.toggle("flip",t<wx);w.classList.add("walk");w.style.left=t+"px";wx=t;clearTimeout(wt);wt=setTimeout(stroll,d*1000)}
+// ===== 페이지 =====
+const NAV=[["home","🏠","Home"],["contents","◎","Contents"],["connect","👥","Connect"],["canvas","🎓","my Canvas"]];
+function navR(){$("nav").innerHTML=NAV.map(n=>`<button data-n="${n[0]}" class="${(S.page==n[0]||(n[0]=="canvas"&&["learn","mission","coach"].includes(S.page)))?"on":""}"><i>${n[1]}</i>${n[2]}</button>`).join("");
+ $("nav").querySelectorAll("button").forEach(b=>b.onclick=()=>{const n=b.dataset.n;if(n=="canvas"){$("sub").classList.toggle("show")}else go(n)})}
+function go(p){if(p=="goalset"){openGoal();return}if(p=="goals")p="learn";if(p=="decorate"){S.page="mission";S.tab="mission";navR();render();openMod();return}S.page=p;$("sub").classList.remove("show");navR();render();scrollTo(0,0)}
+document.querySelectorAll(".sub button").forEach(b=>b.onclick=()=>go(b.dataset.p));
+function sorted(){const a=S.users.map(u=>({n:u[0],x:u[1],me:0}));a[1]={n:"이세령",x:S.xp+230,me:1,base:1};return a}
+const myMonth=()=>S.xp+S.mb;
+function rankList(){const a=S.users.map((u,i)=>({n:u[0],x:u[1],me:0}));a.splice(1,1);a.push({n:"이세령",x:myMonth(),me:1});a.sort((p,q)=>q.x-p.x);return a}
+const UC={"유*석":[4,"#e8b68f","#1f1f1f","short","#5aa0ff"],"이*지":[2,"#ffe3cf","#d9534f","bun","#ff8fa3"],"김*혁":[3,"#ffd9bd","#c98b3c","bob","#ffc94d"],"김*희":[5,"#ffe3cf","#4a3020","bun","#444"],"이*원":[2,"#b9805a","#1f1f1f","short","#7ed957"],"김*름":[6,"#ffd9bd","#eef1f4","short","#b07cff"],"김*":[1,"#e8b68f","#8a63d2","short","#ff8fa3"],"최*규":[3,"#8a5a3c","#1f1f1f","short","#5aa0ff"]};
+const PAS=["#ffe9ef","#e6f3ff","#eaffd9","#fff4d6","#efe6ff","#e0f7f4","#ffeede","#e9e9f7"];
+const cols=["#1c4a9a","#bcd3ff","#7aa7ff","#1c4a9a","#bcd3ff","#e9d3c4","#3b6fd4","#4a8cf0"];
+function rankHTML(){return rankList().map((u,i)=>{const q=UC[u.n],lv=u.me?lvl()+1:Math.max(1,q?q[0]:1);return `<div class="row ${u.me?"mine":""} ${u.me&&S.justRose?"rise":""}"><span class="rk ${i<3?"r"+(i+1):""}">${i+1}</span><span class="av" style="background:${u.me?"var(--gl)":PAS[i%8]};overflow:hidden">${u.me?`<div style="width:36px">${ch("happy",st(),S.c,(S.rank1||!!S.own[S.c.acc]),true)}</div>`:(q?ch("happy",q[0],{skin:q[1],hair:q[2],style:q[3],top:q[4],acc:"none"},false,true):"")}</span><b>${u.n}</b>${u.me&&i==0?" 👑":""}<span style="color:var(--sub);font-size:11px">· 학습 마스터 Lv.${lv}</span><span class="xp">${u.x}XP</span></div>`}).join("")}
+function side(){const L=lvl(),n=CFG.levels[L+1]||2400,p=CFG.levels[L],pc=Math.min(100,(S.xp-p)/(n-p)*100);
+ return `<div class="card me"><div style="text-align:left;margin-bottom:12px"><b style="font-size:18px">이세령</b> <span class="chip">학습 마스터<b>Lv.${L+1}</b></span></div>
+ <div style="background:radial-gradient(circle,#e6f9c8,#c9f08e);border-radius:50%;width:190px;height:190px;margin:8px auto;display:grid;place-items:end center;padding-bottom:22px"><div style="width:110px">${ch("happy")}</div></div>
+ <div style="font-size:11px;color:var(--sub);margin-bottom:4px">${CFG.stage[st()]} 단계</div>
+ <button class="btn" onclick="openMod()" style="font-size:11px">↻ 캐릭터 변경·꾸미기</button>
+ <div style="display:flex;justify-content:space-between;margin:18px 0 6px"><b style="color:#3a9a0a">${S.xp} XP</b><b>${n} XP</b></div><div class="bar"><i style="width:${pc}%"></i></div>
+ <div style="font-size:11px;color:var(--sub);margin:6px 0 14px">다음 레벨까지 ${Math.max(0,n-S.xp)} XP 남았어요!</div>
+ <div style="display:flex;justify-content:space-between;align-items:center;background:var(--gl);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:12px"><span>보유 포인트 <b style="color:#3a9a0a;font-size:15px">${S.pt}P</b></span><button class="btn" onclick="openMod()">꾸미기에 사용</button></div><button class="btn p" style="width:100%;padding:12px" onclick="addXP(40)">＋ 학습하고 40XP·40P 받기 (데모)</button>
+ <div class="stats"><div>오늘 활동<b>7</b></div><div>오늘 XP<b>70</b></div><div>연속 출석일<b>2</b></div></div></div>`}
+function render(){const m=$("main"),p=S.page;let h='<div class="search">🔍 &nbsp;검색</div>';
+ if(p=="home")h+=`<div class="card" style="display:flex;align-items:center;gap:18px;margin-bottom:14px;background:var(--gl);flex-wrap:wrap"><div id="hero" onclick="hop(this)" style="width:150px;flex-shrink:0;cursor:pointer" title="눌러보세요">${ch("happy")}</div><div style="flex:1;min-width:200px"><h1 style="margin:0 0 6px">${st()==0?"응애~ 이세령님, 만나서 반가워요!":"이세령님, 오후도 힘내세요 :)"}</h1><div style="color:var(--sub)">${st()==0?"저는 이세령님과 함께 자랄 학습 친구예요. 학습할수록 쑥쑥 커요!":"오늘도 같이 학습해볼까요?"}</div>${st()==0?`<button class="btn p" style="margin-top:10px" onclick="addXP(20)">첫 학습 시작하기 (+20XP·20P)</button>`:""}</div></div><div class="hero">오직 CEO를 위한 프리미엄 콘텐츠 · 휴넷CEO</div>
+ <div class="grid3">${wishCard()}${journeyCard()}<div class="card"><h2>FAQ</h2><div class="empty">회원정보를 어디서 수정할 수 있나요?</div></div></div>
+ <h2 style="margin-top:20px">요즘 주목받은 콘텐츠예요 ›</h2><div class="tiles">${[["#7a3fb0","#Sales Skill-Set 1 · 나의 세일즈를 매력있게"],["#1f5fa8","#Pre-Sales · 고객 역사랑을 맞추는 세일즈"],["#2f7d57","현장 밀착 엑셀 팁"],["#c24d2c","신입사원 과정"]].map(t=>`<div class="tile" style="background:${t[0]}">${t[1]}</div>`).join("")}</div>`;
+ else if(p=="contents"||p=="connect")h+=`<h1>${p=="contents"?"Contents":"Connect"}</h1><div class="card"><div class="empty">데모 화면입니다. my Canvas › 활동/미션을 확인해보세요.</div></div>`;
+ else if(p=="learn")h+=goalCard()+`<div class="card"><h2>나의 학습 여정을 살펴볼까요?</h2><div class="empty">아직 신청한 학습이 없어요.</div></div><div class="grid3"><div class="card"><h2>이번 달 학습했어요</h2><div class="empty">아직 누적된 학습 시간이 없어요.</div></div><div class="card" style="background:var(--gl)"><h2>다음 레벨까지 계속해보아요! ›</h2><div style="text-align:center;width:100px;margin:auto">${ch("idle")}</div><div class="bar" style="margin-top:12px"><i style="width:${(S.xp-CFG.levels[lvl()])/((CFG.levels[lvl()+1]||2400)-CFG.levels[lvl()])*100}%"></i></div></div><div class="card"><h2>나의 학습시간은?</h2><div class="empty">아직 학습 데이터가 없어요.</div></div></div>`;
+ else if(p=="mission"){h+=`<a style="font-size:12px;color:var(--sub)">← 돌아가기</a><h1 style="margin-top:6px">활동/미션</h1><div class="wrap2">${side()}<div><div class="tabs">${[["mission","미션"],["badge","배지"],["rank","랭킹"]].map(t=>`<button class="${S.tab==t[0]?"on":""}" onclick="S.tab='${t[0]}';render()">${t[1]}</button>`).join("")}</div><div class="card">${tabBody()}</div></div></div>`}
+ else if(p=="coach")h+=coachHTML();
+ m.innerHTML=h;$("walker").style.display="block"}
+function tabBody(){
+ if(S.tab=="mission")return `<h2>◎ 오늘의 미션</h2><div class="note">XP·포인트·배지는 운영 설정(미션 보상 기준)에 따라 자동 반영돼요. 포인트로 캐릭터를 꾸밀 수 있어요.</div>`+CFG.missions.map(x=>`<div class="mis ${x.done?"done":""}"><span>${x.done?"✅":"○"}</span><b>${x.t}</b><span style="margin-left:auto" class="xp">+${x.xp}XP</span></div>`).join("");
+ if(S.tab=="badge")return `<h2>🏅 배지</h2><div class="badges">${CFG.badges.map((b,i)=>{const on=i<3||(i==4&&S.rank1)||(i==5&&lvl()>=2);return `<div class="bd ${on?"":"off"}"><div class="ic">${b[0]}</div>${b[1]}</div>`}).join("")}</div>`;
+ return `<h2>🏅 랭킹</h2><div style="display:flex;gap:8px;margin-bottom:12px;align-items:center"><span class="pill on">이번 달</span><span class="pill">전체</span><button class="btn p" style="margin-left:auto" onclick="rise()">▲ 1위 달성 시연</button></div>${rankHTML()}`}
+function coachHTML(){return `<h1>개인 코칭</h1><div class="card" style="margin-bottom:14px"><h2>📅 맞춤수업 일정</h2><div class="mis"><span>👩‍🏫</span><div><b>내일 14:00 · 맞춤수업 (세일즈 제안서)</b><br><span style="color:var(--sub);font-size:12px">캐릭터가 전날/1시간 전에 말풍선으로 알려줘요</span></div><button class="btn p" style="margin-left:auto" onclick="say(mx('맞춤수업'))">리마인드 보기</button></div></div>
+ <div class="card"><h2>행동 기반 코칭 예시</h2><table><tr><th>상황</th><th>코칭 예시</th></tr>${MSG.map((x,i)=>`<tr><td>${x.k}</td><td>“${x.m}” <button class="btn" onclick="say(${i})">미리보기</button></td></tr>`).join("")}</table></div>`}
+// ===== 상호작용 =====
+function hop(el){if(!el)return;el.classList.add("cheer");setTimeout(()=>el.classList.remove("cheer"),2100)}
+function toast(t){const e=$("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2600)}
+function addXP(n){const o=st(),was=rankList()[0].me;S.xp+=n;S.pt+=n;let t=`+${n}XP · +${n}P`;if(st()>o){t=`🎉 쑥쑥 컸어요! ${CFG.stage[st()]} 단계가 됐어요`;say(mx("보상안내"))}
+ if(!was&&rankList()[0].me&&!S.rank1){S.rank1=true;S.justRose=true;S.c.acc="crown";t="👑 2위 → 1위! 쥬얼리·착장이 무료로 열렸어요";setTimeout(()=>S.justRose=false,1500)}
+ toast(t);render();setTimeout(()=>hop($("hero")),60)}
+function rise(){if(S.rank1)return toast("이미 1위예요! 꾸미기에서 쥬얼리를 골라보세요");S.mb+=60;S.rank1=true;S.justRose=true;S.c.acc="crown";render();toast("👑 2위 → 1위! 쥬얼리·착장이 열렸어요");say(mx("순위변동"));setTimeout(()=>S.justRose=false,1500)}
+const PRC={crown:80,necklace:50,earring:30,cape:100};function buy(k){const p=PRC[k];if(S.pt<p)return toast(`포인트가 부족해요 (${S.pt}/${p}P)`);S.pt-=p;S.own[k]=1;S.c.acc=k;toast(`🛍️ 구매 완료! -${p}P`);mod()}
+function openMod(){$("modal").classList.add("show");mod()}
+$("modal").onclick=e=>{if(e.target.id=="modal"){$("modal").classList.remove("show");render();say(mi)}};
+function mod(){const c=S.c,sw=(k,arr)=>arr.map(v=>`<button class="sw ${c[k]==v?"on":""}" style="background:${v}" onclick="S.c.${k}='${v}';mod()"></button>`).join("");
+ $("mprev").innerHTML=`<div style="width:130px;margin:10px auto">${ch("happy")}</div><b>${CFG.stage[st()]} 단계</b><div style="font-size:11px;color:var(--sub)">XP가 쌓이면 응애 갓난아기→아기→어린이→청소년→청년→성인→할아버지로 자라요</div>`;
+ const PR={crown:80,necklace:50,earring:30,cape:100},un=a=>!a[2]||S.rank1||S.own[a[0]];
+ const A=[["none","없음",0],["crown","👑 왕관",1],["necklace","📿 목걸이",1],["earring","✨ 귀걸이",1],["cape","🦸 망토",1]];
+ $("mopt").innerHTML=`<h2>캐릭터 꾸미기</h2><div class="opt"><h3>피부</h3>${sw("skin",S.skins)}</div><div class="opt"><h3>머리색</h3>${sw("hair",S.hairs)}</div><div class="opt"><h3>머리 스타일${st()<2?" (어린이 단계부터)":""}</h3>${[["short","짧은 머리"],["bob","단발"],["bun","올림머리"]].map(s=>`<button class="pill ${c.style==s[0]?"on":""}" onclick="S.c.style='${s[0]}';mod()">${s[1]}</button>`).join("")}</div><div class="opt"><h3>옷 색</h3>${sw("top",S.colors)}</div><div class="opt"><h3>쥬얼리·착장 · 보유 ${S.pt}P (랭킹 1위는 전체 무료)</h3>${A.map(a=>`<button class="pill ${c.acc==a[0]?"on":""} ${un(a)?"":"lock"}" onclick="${un(a)?`S.c.acc='${a[0]}';mod()`:`buy('${a[0]}')`}">${a[1]}${un(a)?"":` · ${PR[a[0]]}P`}</button>`).join("")}</div><div class="opt"><h3>성장 단계 미리보기 (시연용)</h3>${CFG.stage.map((n,i)=>`<button class="pill ${st()==i?"on":""}" onclick="S.xp=[0,20,100,300,500,800,1200][${i}];mod()">${n}</button>`).join("")}</div><button class="btn p" onclick="$('modal').classList.remove('show');render();say(mi)">완료</button>`}
+
+// ===== 6개월 학습 목표 (수료 과정 · 듣고 싶은 과목 · 캐릭터 리마인드) =====
+const SUG={req:["필수교육 (법정의무)","개인정보보호 교육","신입사원 과정","맞춤수업 · 세일즈 제안서"],wish:["Sales Skill-Set 1","Pre-Sales","현장 밀착 엑셀 팁","AI 업무 활용"]};
+const FREQ=["매일","주 2회","주 1회"];
+let D={req:[],wish:[],freq:"주 2회"};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtD=d=>`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`;
+const gDone=a=>a.filter(x=>x.done).length;
+function goalEnd(){if(S.goal)return new Date(S.goal.end);const e=new Date();e.setMonth(e.getMonth()+6);return e}
+function gPace(){const g=S.goal,n=g.req.length,d=gDone(g.req),rem=Math.max(1,6-S.gm),exp=Math.round(n*S.gm/6);return{n,d,rem,exp,behind:Math.max(0,exp-d),perMonth:Math.ceil((n-d)/rem)}}
+function goalMsg(){const g=S.goal;
+ if(!g)return{m:"6개월 학습 목표를 아직 정하지 않았어요. 지금 같이 정해볼까요?",go:"goalset",mood:"idle"};
+ const p=gPace(),nx=g.req.find(x=>!x.done);
+ if(!p.n)return{m:"수료할 과정을 아직 안 담았어요. 목표에 추가해볼까요?",go:"goalset",mood:"idle"};
+ if(!nx)return{m:`🎉 6개월 목표 ${p.n}개를 모두 수료했어요! 정말 대단해요!`,go:"goals",mood:"happy"};
+ if(p.behind>0)return{m:`${S.gm}개월이 지났는데 ${p.n}개 중 ${p.d}개 수료예요. 목표 페이스보다 ${p.behind}개 늦었어요. 이번 주엔 '${esc(nx.t)}' 어때요?`,go:"goals",mood:"alert"};
+ return{m:`수료 목표 ${p.n}개 중 ${p.d}개 완료! 남은 ${p.rem}개월 동안 한 달에 ${p.perMonth}개씩이면 돼요. 다음은 '${esc(nx.t)}'예요.`,go:"goals",mood:"happy"}}
+function wishMsg(){const g=S.goal,w=g&&g.wish.find(x=>!x.done);
+ if(!g||!g.wish.length)return{m:"듣고 싶은 과목을 미리 담아두면 제가 챙겨드릴게요. 담아볼까요?",go:"goalset",mood:"idle"};
+ if(!w)return{m:"담아둔 과목을 다 들었어요! 새로 듣고 싶은 과목이 있나요?",go:"goalset",mood:"happy"};
+ return{m:`담아둔 '${esc(w.t)}' 수업, 이번 주에 들어볼까요? ${g.freq} 알려드릴게요.`,go:"learn",mood:"idle"}}
+// --- 팝업
+function openGoal(){D=S.goal?{req:S.goal.req.map(x=>({...x})),wish:S.goal.wish.map(x=>({...x})),freq:S.goal.freq}:{req:[],wish:[],freq:"주 2회"};$("gmodal").classList.add("show");gmod()}
+function closeGoal(){$("gmodal").classList.remove("show");render();say(mx("목표 리마인드"))}
+function gsec(k,t,sub,ph){return `<div class="gsec"><h3>${t}<small>${sub}</small></h3><div class="gl" id="g-${k}"></div><div class="gin"><input id="gi-${k}" maxlength="40" placeholder="${ph}" onkeydown="if(event.key==='Enter')gadd('${k}')"><button class="btn" onclick="gadd('${k}')">담기</button></div></div>`}
+function gmod(){$("gbox").innerHTML=`<div style="display:flex;gap:12px;align-items:center"><div style="width:64px;flex-shrink:0">${ch("happy")}</div><div><h2 style="margin:0 0 2px;font-size:17px">6개월 학습 목표를 정해볼까요?</h2><div style="color:var(--sub);font-size:12px">정해두면 제가 진행 상황에 맞춰 알려드릴게요.</div></div></div>
+ ${gsec("req","수료해야 하는 과정","마감 안에 끝낼 것","예: 필수교육, 자격 과정")}
+ ${gsec("wish","듣고 싶은 과목/수업","미리 담아두기","예: 세일즈 협상, 엑셀 활용")}
+ <div class="gsec"><h3>캐릭터 알림 주기</h3><div class="gl" id="g-freq" style="margin:0"></div></div>
+ <div class="gsum" id="gsum"></div>
+ <div class="gfoot"><button class="btn" onclick="closeGoal()">나중에 설정</button><button class="btn p" onclick="gsave()">목표 저장하고 시작</button></div>`;
+ glist("req");glist("wish");gfq()}
+function glist(k){const el=$("g-"+k);el.innerHTML=D[k].map((x,i)=>`<span class="gchip">${esc(x.t)}<button onclick="gdel('${k}',${i})" aria-label="삭제">×</button></span>`).join("")+SUG[k].filter(s=>!D[k].some(x=>x.t==s)).map(s=>`<button class="gsug" data-s="${esc(s)}">＋ ${esc(s)}</button>`).join("");
+ el.querySelectorAll(".gsug").forEach(b=>b.onclick=()=>gadd(k,b.dataset.s));gsum()}
+function gfq(){$("g-freq").innerHTML=FREQ.map(f=>`<button class="pill ${D.freq==f?"on":""}" onclick="D.freq='${f}';gfq()">${f}</button>`).join("");gsum()}
+function gadd(k,t){const inp=$("gi-"+k);t=(t||inp.value).trim();if(!t){inp.focus();return}if(D[k].some(x=>x.t==t)){inp.value="";return toast("이미 담겨 있어요")}D[k].push({t,done:false});inp.value="";glist(k);inp.focus()}
+function gdel(k,i){D[k].splice(i,1);glist(k)}
+function gsum(){const e=$("gsum");if(!e)return;const n=D.req.length,pm=+(n/6).toFixed(1);e.innerHTML=`📅 <b>${fmtD(goalEnd())}</b>까지 6개월${n?` · 수료 <b>${n}개</b> → 한 달에 약 <b>${pm}개</b>씩`:""}${D.wish.length?` · 듣고 싶은 과목 ${D.wish.length}개`:""}<br><span style="color:var(--sub)">캐릭터가 ${D.freq} 진행 상황을 알려줘요.</span>`}
+function gsave(){if(!D.req.length&&!D.wish.length)return toast("수료할 과정이나 듣고 싶은 과목을 1개 이상 담아주세요");
+ const first=!S.goal;S.goal={req:D.req,wish:D.wish,freq:D.freq,end:goalEnd().toISOString()};
+ $("gmodal").classList.remove("show");render();toast(first?"🎯 6개월 목표를 저장했어요":"🎯 목표를 수정했어요");setTimeout(()=>{say(mx("목표 리마인드"));hop($("hero"))},350)}
+function gtog(k,i){const x=S.goal[k][i];x.done=!x.done;if(x.done&&!x.xp){x.xp=1;addXP(k=="req"?40:30)}else render();setTimeout(()=>say(mx("목표 리마인드")),250)}
+$("gmodal").onclick=e=>{if(e.target.id=="gmodal")closeGoal()};
+// --- 카드
+const glist2=(k,t)=>{const a=S.goal[k];return `<h3 style="font-size:12px;color:var(--sub);margin:14px 0 6px">${t}</h3>`+(a.length?a.map((x,i)=>`<label class="mis ${x.done?"done":""}" style="padding:10px 12px;margin-bottom:6px;cursor:pointer"><input type="checkbox" ${x.done?"checked":""} onchange="gtog('${k}',${i})"><b style="${x.done?"text-decoration:line-through;color:var(--sub)":""}">${esc(x.t)}</b><span class="xp">+${k=="req"?40:30}XP</span></label>`).join(""):`<div class="empty" style="padding:10px">담아둔 항목이 없어요</div>`)};
+function goalCard(){const g=S.goal;
+ if(!g)return `<div class="card" style="margin-bottom:14px"><h2>🎯 6개월 학습 목표</h2><div class="empty">아직 목표가 없어요.<br><button class="btn p" style="margin-top:8px" onclick="openGoal()">목표 설정하기</button></div></div>`;
+ const p=gPace(),pct=p.n?p.d/p.n*100:0;
+ return `<div class="card" style="margin-bottom:14px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap"><h2 style="margin:0">🎯 6개월 학습 목표</h2><span class="chip">${fmtD(new Date(g.end))}까지</span><button class="btn" style="margin-left:auto" onclick="openGoal()">목표 수정</button></div>
+ <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span>수료 목표</span><b>${p.d} / ${p.n}개</b></div><div class="bar"><i style="width:${pct}%"></i></div>
+ <div style="font-size:11px;color:var(--sub);margin:6px 0 0">목표 페이스 ${p.exp}개 · ${p.behind>0?`<b style="color:#d9534f">${p.behind}개 늦었어요</b>`:"잘 가고 있어요"} · 캐릭터 알림 ${g.freq}</div>
+ ${glist2("req","수료해야 하는 과정")}${glist2("wish","듣고 싶은 과목/수업")}
+ <div class="opt" style="margin:14px 0 0;align-items:center"><h3>시연용 · 시작 후 경과 시점에 따른 리마인드</h3>${[0,2,4,5].map(m=>`<button class="pill ${S.gm==m?"on":""}" onclick="S.gm=${m};render();say(mx('목표 리마인드'))">${m?m+"개월 후":"지금"}</button>`).join("")}<button class="btn" style="margin-left:auto" onclick="say(mx('담아둔 과목'))">담아둔 과목 알림 보기</button></div></div>`}
+function journeyCard(){const g=S.goal;
+ if(!g||!g.req.length)return `<div class="card"><h2>나의 학습 여정을 살펴볼까요?</h2><div class="empty">아직 신청한 학습이 없어요.<br><button class="btn" onclick="go('contents')">콘텐츠 둘러보기 ›</button></div></div>`;
+ const p=gPace();return `<div class="card"><h2>🎯 6개월 목표</h2><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span>수료 ${p.d}/${p.n}개</span><span style="color:var(--sub)">${fmtD(new Date(g.end))}까지</span></div><div class="bar"><i style="width:${p.d/p.n*100}%"></i></div><div style="font-size:11px;color:var(--sub);margin:8px 0 12px">${p.behind>0?`목표 페이스보다 ${p.behind}개 늦었어요`:"목표 페이스대로 가고 있어요"}</div><button class="btn" onclick="go('learn')">목표 보기 ›</button></div>`}
+function wishCard(){const w=S.goal?S.goal.wish:[];return `<div class="card"><h2>관심과정</h2>${w.length?w.map(x=>`<div style="display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px"><span>${x.done?"✅":"📌"}</span>${esc(x.t)}</div>`).join(""):`<div class="empty" style="padding:14px 0">아직 선택한 콘텐츠가 없어요</div>`}<button class="btn" style="margin-top:10px" onclick="openGoal()">＋ 듣고 싶은 과목 담기</button></div>`}
+navR();render();say(0);if(!S.goal)setTimeout(openGoal,600);setInterval(()=>say((mi+1)%MSG.length),7000);setTimeout(stroll,300);setTimeout(()=>hop($("hero")),500);
+$("wc").onclick=()=>{const w=$("walker");w.classList.add("cheer");setTimeout(()=>w.classList.remove("cheer"),2000)};
+</script></body></html>
